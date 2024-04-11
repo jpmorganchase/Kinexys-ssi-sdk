@@ -154,8 +154,8 @@ export async function revokeCredential(vcDID: DIDWithKeys, didMethod: DIDMethod)
 export function getIssuerFromVC(vc: VerifiableCredential): DID | undefined {
     const jwtService = new JWTService()
     if(typeof vc === 'string') {
-        const credential = jwtService.decodeJWT(vc)?.payload as JWTPayload
-        return credential.iss
+        const { payload } = jwtService.decodeJWT(vc)
+        return payload.iss
     } else {
         return vc.issuer.id
     }
@@ -170,7 +170,7 @@ export function getIssuerFromVC(vc: VerifiableCredential): DID | undefined {
 export function getSubjectFromVP(vc: VerifiableCredential): DID | undefined {
     const jwtService = new JWTService()
     if(typeof vc === 'string') {
-        const credential = jwtService.decodeJWT(vc)?.payload as JWTPayload
+        const credential = jwtService.decodeJWT(vc) as JWTPayload
         return credential.sub as string
     } else {
         return vc.credentialSubject.id

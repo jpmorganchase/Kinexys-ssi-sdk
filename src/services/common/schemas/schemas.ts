@@ -1,7 +1,8 @@
-
-import { validate } from 'jsonschema'
+import Ajv from 'ajv'
+import addFormats from "ajv-formats"
 import { SchemaValidationFailureError } from '../../../errors'
 import { HelperUtils } from '../../../utils/HelperUtils'
+// import jsonSchemaDraft07 from 'ajv/dist/refs/json-schema-draft-07.json'
 
 export class SchemaManager {
 
@@ -9,7 +10,7 @@ export class SchemaManager {
      * Reads in a [JSON schema](https://json-schema.org/specification-links.html#draft-7) 
      * for a Verifiable Credential from a remote location
      * 
-     * Once retrieved from the remote location, the schema will be validated using `jsonschema`
+     * Once retrieved from the remote location, the schema will be validated using `ajv`
      * 
      * @param schemaLocation - the remote location of the schema file
      * @returns a `Promise` that resolves to a Verifiable Credential {@link JsonSchema} object.
@@ -29,7 +30,7 @@ export class SchemaManager {
      * Reads in a [JSON schema](https://json-schema.org/specification-links.html#draft-7) 
      * for a Verifiable Credential from a local file location
      * 
-     * Once retrieved from the location, the schema will be validated using jsonschema
+     * Once retrieved from the location, the schema will be validated using 'ajv'
      * 
      * @param schemaLocation - the file path of the schema file
      * @returns a `Promise` that resolves to a Verifiable Credential {@link JsonSchema} object.
@@ -66,9 +67,9 @@ export class SchemaManager {
         }
         const spec = await HelperUtils.axiosHelper(schemaUrl)
         if(typeof spec === 'object') {
-            return spec
+            return spec.data ? spec.data : spec
         }
-        return HelperUtils.parseJSON(spec)          
+        return HelperUtils.parseJSON(spec)         
     }
 
     /**
@@ -82,7 +83,10 @@ export class SchemaManager {
      */
     static async validateSchema(schema: JsonSchema): Promise<boolean> {
         const schemaSpec = await this.getSchemaSpec(schema)
-        return validate(schema, schemaSpec, {throwError: true}).valid
+        const ajv = new Ajv({ meta: false })
+        addFormats(ajv)
+        const validate = ajv.compile(schemaSpec)
+        return validate(schema)
     }
 
     /**
@@ -91,7 +95,7 @@ export class SchemaManager {
      * [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) defined 
      * in the Verifiable Credential
      * 
-     * `validate` from jsonschema is used to do the schema validation
+     * `validate` from ajv is used to do the schema validation
      * 
      * Verifying the `credentialSubject` structure is a check the Verifier can perform
      * to validate a Verifiable Credential
@@ -99,11 +103,12 @@ export class SchemaManager {
      * 
      * @param credentialSubject the data object to be validated
      * @param schema the `JsonSchema` that the `credentialSubject` should conform to
-     * @returns a `Promise` that resolves to if the validation succeeded. 
-     * Throws jsonschema ValidationError if something goes wrong
+     * @returns `boolean` that indicates if the validation succeeded. 
      */
     static validateCredentialSubject(credentialSubject: object, schema: JsonSchema): boolean {
-        return validate(credentialSubject, schema, {throwError: true}).valid
+        const ajv = new Ajv()
+        const validate = ajv.compile(schema)
+        return validate(credentialSubject)
     }
 }
 

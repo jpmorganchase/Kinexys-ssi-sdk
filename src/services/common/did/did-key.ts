@@ -1,5 +1,5 @@
 import { DIDResolutionResult, DIDResolver, Resolver } from "did-resolver";
-import {randomBytes} from "crypto"
+import { utils } from 'ethers';
 import { DID, DIDMethod, DIDWithKeys } from "./did";
 import { KeyUtils, KEY_ALG } from "../../../utils";
 import { getResolver } from "key-did-resolver";
@@ -15,7 +15,7 @@ export class KeyDIDMethod implements DIDMethod {
       */
     async create(): Promise<DIDWithKeys> {
         const seed = () => {
-            return randomBytes(32)
+            return utils.randomBytes(32)
         }
 
         const key = await Ed25519KeyPair.generate({

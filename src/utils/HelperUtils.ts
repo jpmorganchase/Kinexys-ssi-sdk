@@ -29,6 +29,10 @@ export class HelperUtils {
      * Throws `ReadFileJsonFailureError` if reading or parsing fails
      */
     static async fileReaderJSON(location: string) {
+        if (typeof window !== 'undefined') {
+            // Check if we are in a browser env
+            throw Error(`Operation 'fileReaderJSON' not supported in browser enviroment`)
+        }
         try {
             const fileText = fs.readFileSync(location, 'utf-8');
             return HelperUtils.parseJSON(fileText)
