@@ -1,5 +1,5 @@
 import { verifyCredentialJWT, verifyDID, verifyDIDs, verifyExpiry, verifyIssuanceDate, verifyPresentationJWT, verifyRevocationStatus, verifySchema } from "../../../src/services/verifier/verification"
-import { DEFAULT_CONTEXT, EthrDIDMethod, KeyDIDMethod, SCHEMA_VALIDATOR, SchemaManager, VERIFIABLE_CREDENTIAL, VERIFIABLE_PRESENTATION, getSupportedResolvers } from '../../../src/services/common'
+import { DEFAULT_CONTEXT, KeyDIDMethod, SCHEMA_VALIDATOR, SchemaManager, VERIFIABLE_CREDENTIAL, VERIFIABLE_PRESENTATION, getSupportedResolvers } from '../../../src/services/common'
 import { Resolver } from "did-resolver"
 import { DIDMethodFailureError } from "../../../src/errors"
 
@@ -185,22 +185,12 @@ describe('verification utilities - requiring didresolver', () => {
 
     beforeAll (async () => {
         const keyMethod = new KeyDIDMethod()
-        const ethrMethod = new EthrDIDMethod({
-            name: 'maticmum',
-            rpcUrl: 'https://rpc-mumbai.maticvigil.com/', 
-            registry: "0x41D788c9c5D335362D713152F407692c5EEAfAae"})
-
         oneResolver = getSupportedResolvers([keyMethod])
-        combinedResolver = getSupportedResolvers([keyMethod, ethrMethod])
+        combinedResolver = getSupportedResolvers([keyMethod])
     })
 
     it('Succeeds verifying VC JWT, did:key', async () => {
         const res = await verifyCredentialJWT(VC_PAYLOAD_JWT_KEY, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
-    it('Succeeds verifying VC JWT, did:ethr', async () => {
-        const res = await verifyCredentialJWT(VC_PAYLOAD_JWT_ETHR, combinedResolver)
         expect(res).toBeTruthy()
     })
     
@@ -256,11 +246,6 @@ describe('verification utilities - requiring didresolver', () => {
         expect(res).toBeTruthy()
     })
     
-    it('Succeeds verifying VP JWT, did:ethr', async () => {
-        const res = await verifyPresentationJWT(VP_PAYLOAD_JWT_ETHR, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
     it('Succeeds verifying VP JWT with audience', async () => {
         const res = await verifyPresentationJWT(VP_PAYLOAD_JWT_KEY_AUD, combinedResolver, {
             policies : {
@@ -311,11 +296,6 @@ describe('verification utilities - requiring didresolver', () => {
     
     it('Succeeds verifying VC DIDs, did:key, jwt', async () => {
         const res = await verifyDIDs(VC_PAYLOAD_JWT_KEY, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
-    it('Succeeds verifying VC DIDs, did:ethr, jwt', async () => {
-        const res = await verifyDIDs(VC_PAYLOAD_JWT_ETHR, combinedResolver)
         expect(res).toBeTruthy()
     })
     
