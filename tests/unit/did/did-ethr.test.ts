@@ -1,8 +1,7 @@
-import { Resolver } from "did-resolver";
 import { randomBytes } from "crypto";
 import { DIDMethodFailureError } from "../../../src/errors";
-import { EthrDIDMethod, getSupportedResolvers } from "../../../src/services/common";
-import { KEY_ALG, KeyUtils } from "../../../src/utils";
+import { EthrDIDMethod } from "../../../src/services/common";
+import { KEY_ALG } from "../../../src/utils";
 
 
 describe('did:ethr utilities', () => {
