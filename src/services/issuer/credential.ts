@@ -1,6 +1,5 @@
 import { DEFAULT_CONTEXT, DID, DIDMethod, DIDWithKeys, JWTService, SCHEMA_VALIDATOR, VERIFIABLE_CREDENTIAL } from "../common";
 import { CreateCredentialOptions, CredentialPayload, VerifiableCredential } from 'did-jwt-vc'
-import { JWTPayload } from "did-jwt";
 
 /**
  * Creates a {@link CredentialPayload} from supplied Issuer DID, subject DID,
