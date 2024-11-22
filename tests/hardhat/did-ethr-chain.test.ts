@@ -52,7 +52,6 @@ describe('did:ethr utilities', () => {
             name: 'maticmum',
             provider: didRegistry.provider,
             registry: didRegistry.address,
-            chainId: 31337
         })
     })
 

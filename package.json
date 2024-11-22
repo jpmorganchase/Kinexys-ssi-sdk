@@ -26,7 +26,8 @@
     "build:cjs": "tsc -p ./configs/tsconfig.cjs.json",
     "prepack": "npm run build",
     "lint": "eslint .",
-    "test": "jest --no-cache --verbose --coverage"
+    "test": "jest --no-cache --verbose --coverage",
+    "test:integration": "npx hardhat test"
   },
   "keywords": [],
   "author": "",
