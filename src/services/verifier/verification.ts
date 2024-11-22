@@ -166,7 +166,7 @@ export function verifyIssuanceDate(vc: VerifiableCredential): boolean {
 
 
 /**
- * Verify the revocation status of an Onyx revocable Verifiable Credential
+ * Verify the revocation status of an Kinexys revocable Verifiable Credential
  * 
  * True if VC not revoked, false if revoked
  * 
