@@ -1,6 +1,5 @@
 import { DEFAULT_CONTEXT, DID, DIDMethod, DIDWithKeys, JWTService, SCHEMA_VALIDATOR, VERIFIABLE_CREDENTIAL } from "../common";
 import { CreateCredentialOptions, CredentialPayload, VerifiableCredential } from 'did-jwt-vc'
-import { JWTPayload } from "did-jwt";
 
 /**
  * Creates a {@link CredentialPayload} from supplied Issuer DID, subject DID,
@@ -154,8 +153,8 @@ export async function revokeCredential(vcDID: DIDWithKeys, didMethod: DIDMethod)
 export function getIssuerFromVC(vc: VerifiableCredential): DID | undefined {
     const jwtService = new JWTService()
     if(typeof vc === 'string') {
-        const credential = jwtService.decodeJWT(vc)?.payload as JWTPayload
-        return credential.iss
+        const { payload } = jwtService.decodeJWT(vc)
+        return payload.iss
     } else {
         return vc.issuer.id
     }
@@ -170,8 +169,8 @@ export function getIssuerFromVC(vc: VerifiableCredential): DID | undefined {
 export function getSubjectFromVP(vc: VerifiableCredential): DID | undefined {
     const jwtService = new JWTService()
     if(typeof vc === 'string') {
-        const credential = jwtService.decodeJWT(vc)?.payload as JWTPayload
-        return credential.sub as string
+        const { payload } = jwtService.decodeJWT(vc)
+        return payload.sub as string
     } else {
         return vc.credentialSubject.id
     }

@@ -4,7 +4,7 @@ import { CredentialPayload, PresentationPayload, createVerifiableCredentialJwt, 
 import { ES256KSigner, hexToBytes, EdDSASigner } from 'did-jwt'
 import { KEY_ALG } from "../../../utils";
 import { isString } from 'lodash'
-import {decode} from 'jsonwebtoken';
+import { decodeJwt, decodeProtectedHeader } from 'jose';
 
 export class JWTService implements SignatureService {
     name = 'JWT'
@@ -97,7 +97,10 @@ export class JWTService implements SignatureService {
      * @return decoded JWT object {header, payload, signature}
      */
     decodeJWT(token: JWT) {
-        return decode(token, {complete:true})
+        const header = decodeProtectedHeader(token)
+        const payload = decodeJwt(token);
+        const signature = token.split('.')[2]
+        return { header, payload, signature }
     }
 }
 

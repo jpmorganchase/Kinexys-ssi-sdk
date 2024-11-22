@@ -1,4 +1,3 @@
-import { ValidationError } from "jsonschema";
 import { AxiosRequestFailureError, JsonParseError, ReadFileJsonFailureError, SchemaValidationFailureError } from "../../../src/errors";
 import { SchemaManager } from "../../../src/services/common";
 import { HelperUtils } from "../../../src/utils";
@@ -110,10 +109,8 @@ describe('schema utilities', () => {
     })
 
     it('Rejects a credential subject with additional properties', async () => {
-
-        expect(() => SchemaManager.validateCredentialSubject(
-            {...nameCredentialSubject, id: "did:key:123"}, nameSchema))
-            .toThrowError(ValidationError)
+        const result = await SchemaManager.validateCredentialSubject({...nameCredentialSubject, id: "did:key:123"}, nameSchema)
+        expect(result).toEqual(false);
     })
 
     //can we test mixing schema draft specs??
@@ -175,15 +172,15 @@ describe('schema utilities', () => {
             minProperties: { '$ref': '#/definitions/nonNegativeIntegerDefault0' },
             required: { '$ref': '#/definitions/stringArray' },
             additionalProperties: { '$ref': '#' },
-            definitions: { type: 'object', additionalProperties: [Object], default: {} },
-            properties: { type: 'object', additionalProperties: [Object], default: {} },
+            definitions: { type: 'object', additionalProperties: { '$ref': '#' }, default: {} },
+            properties: { type: 'object', additionalProperties: { '$ref': '#' }, default: {} },
             patternProperties: {
                 type: 'object',
-                additionalProperties: [Object],
-                propertyNames: [Object],
+                additionalProperties: { '$ref': '#' },
+                propertyNames: { '$ref': '#' },
                 default: {}
             },
-            dependencies: { type: 'object', additionalProperties: [Object] },
+            dependencies: { type: 'object', additionalProperties: { '$ref': '#' } },
             propertyNames: { '$ref': '#' },
             const: true,
             enum: { type: 'array', items: true, minItems: 1, uniqueItems: true },
