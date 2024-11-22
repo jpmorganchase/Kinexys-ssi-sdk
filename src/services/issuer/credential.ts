@@ -130,9 +130,9 @@ export async function createAndSignCredentialJWT(
 }
 
 /**
- * This method deactivates an Onyx Verifiable Credential
+ * This method deactivates an Kinexys Verifiable Credential
  * 
- * Onyx revocable credentials require the VC to have a DID registered on the DIDRegistry.
+ * Kinexys revocable credentials require the VC to have a DID registered on the DIDRegistry.
  * Revocation involves the Issuer deactivating this DID to revoke the Credential
  * 
  * @param vcDID the DID of the Verifiable Credential to be revoked

@@ -51,7 +51,7 @@ Please make sure that the Verifier code can access the URI location of the schem
 
 ### Future Improvements
 
-Currently schema definitions are defined in the definitions folder of the SDK. Depending on use case needs, the Onyx SDK will provide options for registering schemas publicly (either on chain or in a hosted location).
+Currently schema definitions are defined in the definitions folder of the SDK. Depending on use case needs, the Kinexys SDK will provide options for registering schemas publicly (either on chain or in a hosted location).
 
 The current JSON Schema used is [draft-07](https://json-schema.org/specification-links.html#draft-7) and the SDK uses [`jsonschema`](https://github.com/tdegrunt/jsonschema) to validate these schemas. The W3C is working on a new [spec](https://www.w3.org/TR/vc-json-schema/) for Credential Schemas. Once this is finalized, this SDK will provide support for that spec as the default.
 

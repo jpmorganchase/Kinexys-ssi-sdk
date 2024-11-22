@@ -1,6 +1,6 @@
 ### NOTE - All hackathon submissions for the Digital Identity Hackathon (Sept 12 - Oct 8) need to be sent to the hackathon organizer, Encode club. PRs will not be considered as offical submissions for the Digital Identity hackathon.
 
-# Onyx SSI SDK
+# Kinexys SSI SDK
 
 Create SSI Ecosystems following W3C Standards for [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and [DIDs](https://www.w3.org/TR/did-core/)
 
@@ -18,7 +18,7 @@ Create SSI Ecosystems following W3C Standards for [Verifiable Credentials](https
 ### Installation
 
 ``` shell
-npm install @jpmorganchase/onyx-ssi-sdk
+npm install @jpmorganchase/Kinexys-ssi-sdk
 ```
 
 ### Build
@@ -42,17 +42,17 @@ npx hardhat test
 ```
 
 ## Navigating the SDK
-* [DID Management](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/common/did): Create, Resolve, Update, and Delete the 2 supported DID Methods (did:key and did:ethr)
-* [Credential Schema Management](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/common/schemas): Example of 4 Credential Types and their schemas as well as helper methods for Schema Management
-* [JWT Signatures](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/common/signatures): Sign Verifiable Credentials as JWTs
-* [Issuer](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/issuer): All functionality required to be a Credential Issuer
-* [Holder](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/holder): All functionality required to be a Credential Holder
-* [Verifier](https://github.com/jpmorganchase/onyx-ssi-sdk/tree/main/src/services/verifier): All functionality to perform basic Credential verification
-* [KeyUtils](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/main/src/utils/KeyUtils.ts): Helper functions for SDK supported keys
+* [DID Management](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/common/did): Create, Resolve, Update, and Delete the 2 supported DID Methods (did:key and did:ethr)
+* [Credential Schema Management](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/common/schemas): Example of 4 Credential Types and their schemas as well as helper methods for Schema Management
+* [JWT Signatures](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/common/signatures): Sign Verifiable Credentials as JWTs
+* [Issuer](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/issuer): All functionality required to be a Credential Issuer
+* [Holder](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/holder): All functionality required to be a Credential Holder
+* [Verifier](https://github.com/jpmorganchase/Kinexys-ssi-sdk/tree/main/src/services/verifier): All functionality to perform basic Credential verification
+* [KeyUtils](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/main/src/utils/KeyUtils.ts): Helper functions for SDK supported keys
 
 ## Full SSI Ecosystem Example
 
-For examples of how to use the SDK, check out our [onyx-ssi-sdk-examples repo](https://github.com/jpmorganchase/onyx-ssi-sdk-examples)
+For examples of how to use the SDK, check out our [Kinexys-ssi-sdk-examples repo](https://github.com/jpmorganchase/Kinexys-ssi-sdk-examples)
 
 Below code shows the VC Creation, VP Presentation and Verification of W3C Credential/Presentation.
 
@@ -145,8 +145,8 @@ As part of the hackathon we are offering 5 challenges to help improve our SDK.
 
 To participate in these challenges please fork this repo, implement your changes, and submit your branch to Encode. We are not accepting PRs on this repo through the duration of the hackathon.
 
-* [DIDs](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/dids-hackathon/src/services/common/did/DIDS.md): Add support for a new DID method or support the Universal Resolver
-* [JSON-LD Credentials](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/jsonld-hackathon/src/services/common/schemas/JSONLD.md): Provide support for JSON-LD Credentials
-* [Revocation](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/revocation-hackathon/src/services/common/revocation/README.md): Implement a new Credential Revocation scheme
-* [SD-JWT](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/sdjwt-hackathon/src/services/common/signatures/SDJWT.md): Implement the emerging SD-JWT spec for selective disclosure
-* [Communication](https://github.com/jpmorganchase/onyx-ssi-sdk/blob/oidc-hackathon/src/services/communication/oidc/README.md): Implement support for OIDC, DIDComm or Presentation Exchange
+* [DIDs](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/dids-hackathon/src/services/common/did/DIDS.md): Add support for a new DID method or support the Universal Resolver
+* [JSON-LD Credentials](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/jsonld-hackathon/src/services/common/schemas/JSONLD.md): Provide support for JSON-LD Credentials
+* [Revocation](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/revocation-hackathon/src/services/common/revocation/README.md): Implement a new Credential Revocation scheme
+* [SD-JWT](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/sdjwt-hackathon/src/services/common/signatures/SDJWT.md): Implement the emerging SD-JWT spec for selective disclosure
+* [Communication](https://github.com/jpmorganchase/Kinexys-ssi-sdk/blob/oidc-hackathon/src/services/communication/oidc/README.md): Implement support for OIDC, DIDComm or Presentation Exchange
