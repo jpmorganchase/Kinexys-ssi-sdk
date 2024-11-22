@@ -1,7 +1,17 @@
 import { verifyCredentialJWT, verifyDID, verifyDIDs, verifyExpiry, verifyIssuanceDate, verifyPresentationJWT, verifyRevocationStatus, verifySchema } from "../../../src/services/verifier/verification"
-import { DEFAULT_CONTEXT, EthrDIDMethod, KeyDIDMethod, SCHEMA_VALIDATOR, SchemaManager, VERIFIABLE_CREDENTIAL, VERIFIABLE_PRESENTATION, getSupportedResolvers } from '../../../src/services/common'
+import { DEFAULT_CONTEXT, KeyDIDMethod, SCHEMA_VALIDATOR, SchemaManager, VERIFIABLE_CREDENTIAL, VERIFIABLE_PRESENTATION, getSupportedResolvers } from '../../../src/services/common'
 import { Resolver } from "did-resolver"
 import { DIDMethodFailureError } from "../../../src/errors"
+import { createAndSignCredentialJWT } from "../../../src/services/issuer/credential"
+
+const keyDID = new KeyDIDMethod()
+
+const yesterdayDate = new Date();
+yesterdayDate.setDate(yesterdayDate.getDate()-1);
+const futureDate = new Date();
+const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000); 
+futureDate.setTime(currentTimeInSeconds * 1000);
+futureDate.setFullYear(futureDate.getFullYear() + 1);
 
 describe('verification utilities', () => {
 
@@ -9,10 +19,6 @@ describe('verification utilities', () => {
     const VC_PAYLOAD_JWT_ETHR = 'eyJhbGciOiJFUzI1NksiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDQxMzcwMDQsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiT2xsaWUifSwiY3JlZGVudGlhbFNjaGVtYSI6eyJpZCI6Imh0dHBzOi8vZXhhbXBsZS5vcmcvZXhhbXBsZXMvZGVncmVlLmpzb24iLCJ0eXBlIjoiSnNvblNjaGVtYVZhbGlkYXRvcjIwMTgifSwiY3JlZGVudGlhbFN0YXR1cyI6eyJpZCI6Imh0dHBzOi8vZXhhbXBsZS5lZHUvc3RhdHVzLzI0IiwidHlwZSI6IkNyZWRlbnRpYWxTdGF0dXNMaXN0MjAxNyJ9fSwic3ViIjoiZGlkOmV0aHI6bWF0aWNtdW06MHg1Rjg4MGE2ZUI3N2MxMkRiMmUxNEYyOWJmRTNiMWFhZjk0Qzk1NTA4IiwianRpIjoiZGlkOmV0aHI6bWF0aWNtdW06MHgyMGIxY0JCNTU0MjU5Rjc2MzZGQjQ4NzUzNkExN0UwRTcyMjQ4MzY4IiwibmJmIjoxNjg0NDMxMjY2LCJpc3MiOiJkaWQ6ZXRocjptYXRpY211bToweDQzODMzYWVCYzAxOGVkYzU4RDc3NjViYUI0OUI2MWM2RDFlOWQ1NGYifQ.hX-56L8cspoihl7tNYJwuvqhnW3XRYbJY1Hsu5HAEgJFcZGG-3yD2qCgawzLKT2twf9fcz8nBccbCuiyonUjAg'
     //VC with did:key
     const VC_PAYLOAD_JWT_KEY = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUHJvb2ZPZk5hbWUiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsibmFtZSI6IkFuZ2VsYSJ9fSwic3ViIjoiZGlkOmtleTp6Nk1rcTUycXp3WnNodHZ2akx5NEwzZXBpVlRUMXVDZHhldGU3MWcyZDdNOWg5NkgiLCJuYmYiOjE2ODQ5NDk0MDEsImlzcyI6ImRpZDprZXk6ejZNa2hhaVpBOFlHUjg2M3JnZTNKTnR6cEE2cUtwbm85SFRoNHVjUnNNTWlwbzVXIn0.1IQrzPGTMyc7tUQSkxuDGbIjt2t556QYTotxC7wkm8eT3appXSP-6VlLPSuC1Uk50XYPO0r2HlOqKqHLqee4DA'
-    //VC with did:key, expiration, vc id, credentialSchema, credentialStatus
-    const VC_PAYLOAD_JWT_KEY_OPTIONS = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY2MzYyNzcsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiQW5nZWxhIn0sImNyZWRlbnRpYWxTY2hlbWEiOnsiaWQiOiJodHRwczovL2V4YW1wbGUub3JnL2V4YW1wbGVzL2RlZ3JlZS5qc29uIiwidHlwZSI6Ikpzb25TY2hlbWFWYWxpZGF0b3IyMDE4In0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL2V4YW1wbGUuZWR1L3N0YXR1cy8yNCIsInR5cGUiOiJDcmVkZW50aWFsU3RhdHVzTGlzdDIwMTcifX0sInN1YiI6ImRpZDprZXk6ejZNa3FMUE5YWnJWa1hXV0JwS0ZpZXZ4S3BBMmtINVkzYzQzVXhEamdCcTdvRWNUIiwianRpIjoiZGlkOmtleTp6Nk1rdVo3NFJqQkVDSkhkSlhyZlA4eWo5Z3BNVEV1aURWa3RFTjdIUlBNTUNvVEMiLCJuYmYiOjE2ODUwMTM4NzcsImlzcyI6ImRpZDprZXk6ejZNa2pFRnozbWNHTHU3SFRYQUFHMkhKQmlKZTdWR2VUQVRVcml2S0xqZndySlFGIn0.9Dn95yw2-ZxnKDe7huYaVioE_U7Q9cHBzRkDNwa6_S1E0LRHiof_28U6g4exgkLHdWUyRvbmlpJIrUlYZIDWCw'
-    //VC with did:key, invalid expiration, vc id, credentialSchema and credentialStatus
-    const VC_PAYLOAD_JWT_KEY_EXP = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTM0NzgzOTUsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiQW5nZWxhIn0sImNyZWRlbnRpYWxTY2hlbWEiOnsiaWQiOiJodHRwczovL2V4YW1wbGUub3JnL2V4YW1wbGVzL2RlZ3JlZS5qc29uIiwidHlwZSI6Ikpzb25TY2hlbWFWYWxpZGF0b3IyMDE4In0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL2V4YW1wbGUuZWR1L3N0YXR1cy8yNCIsInR5cGUiOiJDcmVkZW50aWFsU3RhdHVzTGlzdDIwMTcifX0sInN1YiI6ImRpZDprZXk6ejZNa29ZblBHYnd4V1ZQV1U2TnU1MkxHdllWRmIxNldTZWZ3SnRGeWZmWnRMNWtIIiwianRpIjoiZGlkOmtleTp6Nk1rcWRZMUZVR3lreW9Fb3JTTE44Z3dSNGhKYWRvVVd6RXp1QUNqbkZtc1V2dkIiLCJuYmYiOjE2ODUwMTQzOTUsImlzcyI6ImRpZDprZXk6ejZNa2tzc28yRXkzRlBnSENhU21Wd3lxOEJwVUNNTHB0VzlHcUZEeTRlSmpkeWJlIn0.--25EU2TEkaKo7BOg4b-VcjNUknGfSTcuxID5eAqb0vuJnm4QLBz3KWIhyHJtUpGvsuNrVfu8NtDgFG3JuRuCw'
     
     const VC_PAYLOAD_OBJECT = {
         '@context': [DEFAULT_CONTEXT],
@@ -27,23 +33,21 @@ describe('verification utilities', () => {
         proof: {}
     }
 
+
     it('Succeeds verifying VC Expiration, object', async () => {
-        const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000); 
-        const futureDate = new Date();
-        futureDate.setTime(currentTimeInSeconds * 1000);
-        futureDate.setFullYear(futureDate.getFullYear() + 1);
         const res = verifyExpiry({...VC_PAYLOAD_OBJECT, expirationDate: futureDate.toISOString()})
         expect(res).toBeTruthy()
     })
 
     it('Succeeds verifying VC Expiration, jwt', async () => {
-        const res = verifyExpiry(VC_PAYLOAD_JWT_KEY_OPTIONS)
-        expect(res).toBeTruthy()
-    })
-
-    it('Succeeds rejecting VC Expiration, jwt', async () => {
-        const res = verifyExpiry(VC_PAYLOAD_JWT_KEY_EXP)
-        expect(res).toBeFalsy()
+        const issuerDidKeys = await keyDID.create();
+        const holderDidKeys = await keyDID.create();
+        const validJwt = await createAndSignCredentialJWT(issuerDidKeys, holderDidKeys.did, { some: 'property'}, [VERIFIABLE_CREDENTIAL],{ expirationDate: futureDate });
+        const expiredJwt = await createAndSignCredentialJWT(issuerDidKeys, holderDidKeys.did, { some: 'property'}, [VERIFIABLE_CREDENTIAL],{ expirationDate: yesterdayDate });
+        const res1 = verifyExpiry(validJwt);
+        expect(res1).toBeTruthy();
+        const res2 = verifyExpiry(expiredJwt);
+        expect(res2).toBeFalsy();
     })
 
     it('Succeeds rejecting no VC Expiration, jwt', async () => {
@@ -138,11 +142,7 @@ describe('verification utilities - requiring didresolver', () => {
     //VC with did:ethr, vc id, expiration, credentialSchema and credentialStatus
     const VC_PAYLOAD_JWT_ETHR = 'eyJhbGciOiJFUzI1NksiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDQxMzcwMDQsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiT2xsaWUifSwiY3JlZGVudGlhbFNjaGVtYSI6eyJpZCI6Imh0dHBzOi8vZXhhbXBsZS5vcmcvZXhhbXBsZXMvZGVncmVlLmpzb24iLCJ0eXBlIjoiSnNvblNjaGVtYVZhbGlkYXRvcjIwMTgifSwiY3JlZGVudGlhbFN0YXR1cyI6eyJpZCI6Imh0dHBzOi8vZXhhbXBsZS5lZHUvc3RhdHVzLzI0IiwidHlwZSI6IkNyZWRlbnRpYWxTdGF0dXNMaXN0MjAxNyJ9fSwic3ViIjoiZGlkOmV0aHI6bWF0aWNtdW06MHg1Rjg4MGE2ZUI3N2MxMkRiMmUxNEYyOWJmRTNiMWFhZjk0Qzk1NTA4IiwianRpIjoiZGlkOmV0aHI6bWF0aWNtdW06MHgyMGIxY0JCNTU0MjU5Rjc2MzZGQjQ4NzUzNkExN0UwRTcyMjQ4MzY4IiwibmJmIjoxNjg0NDMxMjY2LCJpc3MiOiJkaWQ6ZXRocjptYXRpY211bToweDQzODMzYWVCYzAxOGVkYzU4RDc3NjViYUI0OUI2MWM2RDFlOWQ1NGYifQ.hX-56L8cspoihl7tNYJwuvqhnW3XRYbJY1Hsu5HAEgJFcZGG-3yD2qCgawzLKT2twf9fcz8nBccbCuiyonUjAg'
     //VC with did:key
-    const VC_PAYLOAD_JWT_KEY = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUHJvb2ZPZk5hbWUiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsibmFtZSI6IkFuZ2VsYSJ9fSwic3ViIjoiZGlkOmtleTp6Nk1rcTUycXp3WnNodHZ2akx5NEwzZXBpVlRUMXVDZHhldGU3MWcyZDdNOWg5NkgiLCJuYmYiOjE2ODQ5NDk0MDEsImlzcyI6ImRpZDprZXk6ejZNa2hhaVpBOFlHUjg2M3JnZTNKTnR6cEE2cUtwbm85SFRoNHVjUnNNTWlwbzVXIn0.1IQrzPGTMyc7tUQSkxuDGbIjt2t556QYTotxC7wkm8eT3appXSP-6VlLPSuC1Uk50XYPO0r2HlOqKqHLqee4DA'
-    //VC with did:key, expiration, vc id, credentialSchema and credentialStatus
-    const VC_PAYLOAD_JWT_KEY_OPTIONS = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY2MzYyNzcsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiQW5nZWxhIn0sImNyZWRlbnRpYWxTY2hlbWEiOnsiaWQiOiJodHRwczovL2V4YW1wbGUub3JnL2V4YW1wbGVzL2RlZ3JlZS5qc29uIiwidHlwZSI6Ikpzb25TY2hlbWFWYWxpZGF0b3IyMDE4In0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL2V4YW1wbGUuZWR1L3N0YXR1cy8yNCIsInR5cGUiOiJDcmVkZW50aWFsU3RhdHVzTGlzdDIwMTcifX0sInN1YiI6ImRpZDprZXk6ejZNa3FMUE5YWnJWa1hXV0JwS0ZpZXZ4S3BBMmtINVkzYzQzVXhEamdCcTdvRWNUIiwianRpIjoiZGlkOmtleTp6Nk1rdVo3NFJqQkVDSkhkSlhyZlA4eWo5Z3BNVEV1aURWa3RFTjdIUlBNTUNvVEMiLCJuYmYiOjE2ODUwMTM4NzcsImlzcyI6ImRpZDprZXk6ejZNa2pFRnozbWNHTHU3SFRYQUFHMkhKQmlKZTdWR2VUQVRVcml2S0xqZndySlFGIn0.9Dn95yw2-ZxnKDe7huYaVioE_U7Q9cHBzRkDNwa6_S1E0LRHiof_28U6g4exgkLHdWUyRvbmlpJIrUlYZIDWCw'
-    //VC with did:key, invalid expiration, vc id, credentialSchema and credentialStatus
-    const VC_PAYLOAD_JWT_KEY_EXP = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTM0NzgzOTUsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQcm9vZk9mTmFtZSJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJuYW1lIjoiQW5nZWxhIn0sImNyZWRlbnRpYWxTY2hlbWEiOnsiaWQiOiJodHRwczovL2V4YW1wbGUub3JnL2V4YW1wbGVzL2RlZ3JlZS5qc29uIiwidHlwZSI6Ikpzb25TY2hlbWFWYWxpZGF0b3IyMDE4In0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL2V4YW1wbGUuZWR1L3N0YXR1cy8yNCIsInR5cGUiOiJDcmVkZW50aWFsU3RhdHVzTGlzdDIwMTcifX0sInN1YiI6ImRpZDprZXk6ejZNa29ZblBHYnd4V1ZQV1U2TnU1MkxHdllWRmIxNldTZWZ3SnRGeWZmWnRMNWtIIiwianRpIjoiZGlkOmtleTp6Nk1rcWRZMUZVR3lreW9Fb3JTTE44Z3dSNGhKYWRvVVd6RXp1QUNqbkZtc1V2dkIiLCJuYmYiOjE2ODUwMTQzOTUsImlzcyI6ImRpZDprZXk6ejZNa2tzc28yRXkzRlBnSENhU21Wd3lxOEJwVUNNTHB0VzlHcUZEeTRlSmpkeWJlIn0.--25EU2TEkaKo7BOg4b-VcjNUknGfSTcuxID5eAqb0vuJnm4QLBz3KWIhyHJtUpGvsuNrVfu8NtDgFG3JuRuCw'
+    const VC_PAYLOAD_JWT_KEY = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUHJvb2ZPZk5hbWUiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsibmFtZSI6IkFuZ2VsYSJ9fSwic3ViIjoiZGlkOmtleTp6Nk1rcTUycXp3WnNodHZ2akx5NEwzZXBpVlRUMXVDZHhldGU3MWcyZDdNOWg5NkgiLCJuYmYiOjE2ODQ5NDk0MDEsImlzcyI6ImRpZDprZXk6ejZNa2hhaVpBOFlHUjg2M3JnZTNKTnR6cEE2cUtwbm85SFRoNHVjUnNNTWlwbzVXIn0.1IQrzPGTMyc7tUQSkxuDGbIjt2t556QYTotxC7wkm8eT3appXSP-6VlLPSuC1Uk50XYPO0r2HlOqKqHLqee4DA'    
     
     const VC_PAYLOAD_OBJECT = {
         '@context': [DEFAULT_CONTEXT],
@@ -185,13 +185,8 @@ describe('verification utilities - requiring didresolver', () => {
 
     beforeAll (async () => {
         const keyMethod = new KeyDIDMethod()
-        const ethrMethod = new EthrDIDMethod({
-            name: 'maticmum',
-            rpcUrl: 'https://rpc-mumbai.maticvigil.com/', 
-            registry: "0x41D788c9c5D335362D713152F407692c5EEAfAae"})
-
         oneResolver = getSupportedResolvers([keyMethod])
-        combinedResolver = getSupportedResolvers([keyMethod, ethrMethod])
+        combinedResolver = getSupportedResolvers([keyMethod])
     })
 
     it('Succeeds verifying VC JWT, did:key', async () => {
@@ -199,13 +194,12 @@ describe('verification utilities - requiring didresolver', () => {
         expect(res).toBeTruthy()
     })
     
-    it('Succeeds verifying VC JWT, did:ethr', async () => {
-        const res = await verifyCredentialJWT(VC_PAYLOAD_JWT_ETHR, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
     it('Succeeds verifying VC JWT with options', async () => {
-        const res = await verifyCredentialJWT(VC_PAYLOAD_JWT_KEY_OPTIONS, combinedResolver, {
+        const issuerDidKeys = await keyDID.create();
+        const holderDidKeys = await keyDID.create();
+        const validJwt = await createAndSignCredentialJWT(issuerDidKeys, holderDidKeys.did, { some: 'property'}, [VERIFIABLE_CREDENTIAL],{ expirationDate: futureDate });
+
+        const res = await verifyCredentialJWT(validJwt, combinedResolver, {
             policies : {
                 format: true
             }
@@ -214,7 +208,11 @@ describe('verification utilities - requiring didresolver', () => {
     })
     
     it('Succeeds verifying VC JWT with date options', async () => {
-        const res = await verifyCredentialJWT(VC_PAYLOAD_JWT_KEY_OPTIONS, combinedResolver, {
+        const issuerDidKeys = await keyDID.create();
+        const holderDidKeys = await keyDID.create();
+        const validJwt = await createAndSignCredentialJWT(issuerDidKeys, holderDidKeys.did, { some: 'property'}, [VERIFIABLE_CREDENTIAL],{ expirationDate: futureDate });
+
+        const res = await verifyCredentialJWT(validJwt, combinedResolver, {
             policies: {
                 issuanceDate: true,
                 expirationDate: true
@@ -224,7 +222,10 @@ describe('verification utilities - requiring didresolver', () => {
     })
 
     it('Throws error verifying VC JWT with date options, invalid expiration', async () => {
-        await expect(verifyCredentialJWT(VC_PAYLOAD_JWT_KEY_EXP, combinedResolver, {
+        const issuerDidKeys = await keyDID.create();
+        const holderDidKeys = await keyDID.create();
+        const expiredJwt = await createAndSignCredentialJWT(issuerDidKeys, holderDidKeys.did, { some: 'property'}, [VERIFIABLE_CREDENTIAL],{ expirationDate: yesterdayDate });
+        await expect(verifyCredentialJWT(expiredJwt, combinedResolver, {
             policies: {
                 issuanceDate: true,
                 expirationDate: true
@@ -253,11 +254,6 @@ describe('verification utilities - requiring didresolver', () => {
     
     it('Succeeds verifying VP JWT, did:key', async () => {
         const res = await verifyPresentationJWT(VP_PAYLOAD_JWT_KEY, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
-    it('Succeeds verifying VP JWT, did:ethr', async () => {
-        const res = await verifyPresentationJWT(VP_PAYLOAD_JWT_ETHR, combinedResolver)
         expect(res).toBeTruthy()
     })
     
@@ -311,11 +307,6 @@ describe('verification utilities - requiring didresolver', () => {
     
     it('Succeeds verifying VC DIDs, did:key, jwt', async () => {
         const res = await verifyDIDs(VC_PAYLOAD_JWT_KEY, combinedResolver)
-        expect(res).toBeTruthy()
-    })
-    
-    it('Succeeds verifying VC DIDs, did:ethr, jwt', async () => {
-        const res = await verifyDIDs(VC_PAYLOAD_JWT_ETHR, combinedResolver)
         expect(res).toBeTruthy()
     })
     

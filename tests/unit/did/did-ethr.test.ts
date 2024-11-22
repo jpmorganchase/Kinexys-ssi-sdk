@@ -1,28 +1,15 @@
-import { Resolver } from "did-resolver";
 import { randomBytes } from "crypto";
 import { DIDMethodFailureError } from "../../../src/errors";
-import { EthrDIDMethod, getSupportedResolvers } from "../../../src/services/common";
-import { KEY_ALG, KeyUtils } from "../../../src/utils";
+import { EthrDIDMethod } from "../../../src/services/common";
+import { KEY_ALG } from "../../../src/utils";
 
 
 describe('did:ethr utilities', () => {
 
-    let didResolver1: Resolver
-    let didResolver2: Resolver
     let ethrDidMethod: EthrDIDMethod
-    let ethrDidMethod2: EthrDIDMethod
     
     const SAMPLE_DID = {
         did: 'did:ethr:maticmum:0x076231A475b8F905f71f45580bD00642025c4e0D',
-        keyPair: {
-            algorithm: KEY_ALG.ES256K,
-            publicKey: '02f034136f204a02045c17f977fa9ac36362fe5a86524b464a56a26cbfb0754e23',
-            privateKey: '0xd42a4eacb5cf7758ae07e12f3b3971b643b6c78f18972eb5444ffd66e03bac15'
-        }
-    }
-
-    const SAMPLE_DID_2 = {
-        did: 'did:ethr:0x80001:0x076231A475b8F905f71f45580bD00642025c4e0D',
         keyPair: {
             algorithm: KEY_ALG.ES256K,
             publicKey: '02f034136f204a02045c17f977fa9ac36362fe5a86524b464a56a26cbfb0754e23',
@@ -37,83 +24,18 @@ describe('did:ethr utilities', () => {
         }
     }
 
-    beforeAll (async () => {
+    beforeAll(async () => {
         ethrDidMethod = new EthrDIDMethod({
-            name: 'maticmum',
-            rpcUrl: 'https://rpc-mumbai.maticvigil.com/', 
-            registry: "0x41D788c9c5D335362D713152F407692c5EEAfAae"})
-        
-
-        ethrDidMethod2 = new EthrDIDMethod({
-            name: '0x80001', 
-            rpcUrl: 'https://rpc-mumbai.maticvigil.com/', 
-            registry: "0x41D788c9c5D335362D713152F407692c5EEAfAae"})
-
-        didResolver1 = getSupportedResolvers([ethrDidMethod])
-        didResolver2 = getSupportedResolvers([ethrDidMethod2])
-    })
-
-    it('Successfully create did:ethr', async () => {
-        const res = await ethrDidMethod.create()
-        expect(res.did).toContain('did:ethr:maticmum')
-        expect(KeyUtils.isHexPrivateKey(res.keyPair.privateKey)).toEqual(true)
-        expect(KeyUtils.isHexPublicKey(res.keyPair.publicKey)).toBeTruthy()
-        expect(res.keyPair.algorithm).toEqual(KEY_ALG.ES256K)
-
-        const doc = await didResolver1.resolve(res.did)
-        expect(doc.didResolutionMetadata.error).toBeFalsy()
-    })
-
-
-    it('Successfully create did:ethr - chainId', async () => {
-        const res = await ethrDidMethod2.create()
-        expect(res.did).toContain('did:ethr:0x80001')
-        expect(KeyUtils.isHexPrivateKey(res.keyPair.privateKey)).toEqual(true)
-        expect(KeyUtils.isHexPublicKey(res.keyPair.publicKey)).toBeTruthy()
-        expect(res.keyPair.algorithm).toEqual(KEY_ALG.ES256K)
-
-        const doc = await didResolver2.resolve(res.did)
-        expect(doc.didResolutionMetadata.error).toBeFalsy()
-    })
-
-    it('Successfully create did:ethr from private key', async () => {
-        const res = await ethrDidMethod.generateFromPrivateKey(SAMPLE_DID.keyPair.privateKey)
-        expect(res).toBeDefined()
-        expect(res.did).toBeDefined()
-        expect(res.did).toEqual(SAMPLE_DID.did)
-        expect(res.keyPair.privateKey).toBeDefined()
-        expect(KeyUtils.isHexPrivateKey(res.keyPair.privateKey)).toBeTruthy()
-        expect(res.keyPair.privateKey).toEqual(SAMPLE_DID.keyPair.privateKey)
-        expect(res.keyPair.publicKey).toBeDefined()
-        expect(KeyUtils.isHexPublicKey(res.keyPair.publicKey)).toBeTruthy()
-        expect(res.keyPair.publicKey).toEqual(SAMPLE_DID.keyPair.publicKey)
-        expect(res.keyPair.algorithm).toEqual(KEY_ALG.ES256K)
-        
-        const doc = await didResolver1.resolve(res.did)
-        expect(doc).toBeDefined()
-        expect(doc.didResolutionMetadata.error).toBeFalsy()
+            registry: '0x46149ec0222143d17A39D662415aA1531f93485E',
+            name: 'matic',
+            rpcUrl: 'https://rpc-amoy.polygon.technology/'
+        })
     })
 
     it('Rejects generation from non-hex private key', async () => {
         const pk = await randomBytes(64)
         await expect(ethrDidMethod.generateFromPrivateKey(pk))
             .rejects.toThrowError(DIDMethodFailureError)
-    })
-
-    it('Successfully resolve did:ethr identifier', async () => {
-        const res = await ethrDidMethod.resolve(SAMPLE_DID.did)
-        expect(res).toBeDefined()
-        expect(res.didDocument).toBeDefined()
-        expect(res.didDocument?.id).toEqual(SAMPLE_DID.did)
-        expect(res.didResolutionMetadata.error).toBeFalsy()
-    })
-
-    it('Successfully resolve did:ethr identifier - chain id', async () => {
-        const res = await ethrDidMethod2.resolve(SAMPLE_DID_2.did)
-        expect(res).toBeDefined()
-        expect(res.didDocument).toBeDefined()
-        expect(res.didDocument?.id).toEqual(SAMPLE_DID_2.did)
-        expect(res.didResolutionMetadata.error).toBeFalsy()
     })
 
     it('Resolution fails with did:key', async () => {
